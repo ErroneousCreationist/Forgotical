@@ -156,6 +156,10 @@ namespace Forgotical
             ProgramEnded = false;
             EXECUTION_LINE = prevlines.Length-1;
             lines = prevlines;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                lines[i] = Utility.TranslateQuotedStrings(lines[i]);
+            }
             STEP_MODE = false;
             SHELL_MODE = true;
         }
@@ -163,8 +167,8 @@ namespace Forgotical
         public bool ShellExecuteLine(string code, out string Result)
         {
             if (code.Contains(' ')) { Output = ""; Result = Errors.ERROR_MESSAGES["error_space"].GetChoice(); return false; }
-            code = code.Replace("-", " ");
             if (code.IndexOfAny("1234567890".ToCharArray()) != -1) { Output = ""; ProgramEnded = true; Result = Errors.ERROR_MESSAGES["error_numbers"].GetChoice(); return false; }
+            //Utility.UnTranslateString(Utility.GetStringsInQuotes(code));
             if (!ExecuteLine(lines[EXECUTION_LINE], out string tempresult))
             {
                 Output = tempresult;
@@ -179,6 +183,7 @@ namespace Forgotical
         public bool ExecuteCode(string code, out string Result)
         {
             //whitespace error because we hate whitespace here
+            code = Utility.TranslateQuotedStrings(code); //sanitise all of the strings in quotation marks to make them safe and not throw errors
             var resultant = code.Split("\n");
             lineslength = resultant.Length;
             if (code.Contains(' ')) { Output = ""; Result = Errors.ERROR_MESSAGES["error_space"].GetChoice(); return false; }
@@ -354,6 +359,15 @@ namespace Forgotical
             //get args (separated by commas
             string[] args = expressions[1].Split(",");
             if(args.Length == 0) { RESULT = Errors.ERROR_MESSAGES["error_noargs"].GetChoice(); return false; }
+
+            //de-sanitise args
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (!args[i].Contains("'")) { continue; }
+                args[i] = args[i].Replace("'", "");
+                args[i] = Utility.UnTranslateString(args[i]);
+                args[i] = args[i].Replace("~'", "'");
+            }
 
             //code for all of the expressions
             switch (op)
@@ -872,6 +886,15 @@ namespace Forgotical
             //get args (separated by commas
             string[] args = expressions[1].Split(",");
             if (args.Length == 0) { RESULT = Errors.ERROR_MESSAGES["error_noargs"].GetChoice(); return (false, ""); }
+
+            //de-sanitise args
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (!args[i].Contains("'")) { continue; }
+                args[i] = args[i].Replace("'", "");
+                args[i] = Utility.UnTranslateString(args[i]);
+                args[i] = args[i].Replace("~'", "'");
+            }
 
             //code for all of the expressions
             switch (op)
