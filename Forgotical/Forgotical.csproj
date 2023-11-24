@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+<PropertyGroup>
+  <RuntimeIdentifiers>win10-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dotnet.Bundle" Version="0.9.13" />
+  </ItemGroup>
+
+<PropertyGroup>
+    <CFBundleName>Forgotical</CFBundleName> <!-- Also defines .app file name -->
+    <CFBundleDisplayName>Forgotical</CFBundleDisplayName>
+    <CFBundleIdentifier>com.erroneous.forgotical</CFBundleIdentifier>
+    <CFBundleVersion>0.1</CFBundleVersion>
+    <CFBundlePackageType>APPL</CFBundlePackageType>
+    <CFBundleExecutable>Forgotical</CFBundleExecutable>
+    <NSHighResolutionCapable>true</NSHighResolutionCapable>
+    <CFBundleShortVersionString>0.1</CFBundleShortVersionString>
+</PropertyGroup>
+
+</Project>
