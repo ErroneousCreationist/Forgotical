@@ -187,6 +187,116 @@ namespace Forgotical.InternalUtility
             }
             return strings.OrderBy(s => s.Count(c => c == '(')).ToList();
         }
+
+        public static List<string> GetStringsInQuotes(string input)
+        {
+            List<string> strings = new List<string>();
+            int depth = 0;
+            int start = -1;
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (input[i] == '"')
+                {
+                    if (depth == 0)
+                    {
+                        start = i + 1;
+                    }
+                    depth++;
+                }
+                else if (input[i] == '"')
+                {
+                    depth--;
+                    if (depth == 0 && start != -1)
+                    {
+                        string sub = input.Substring(start, i - start);
+                        strings.AddRange(GetStringsInQuotes(sub));
+                        strings.Add(sub);
+                        start = -1;
+                    }
+                }
+            }
+            return strings.OrderBy(s => s.Count(c => c == '(')).ToList();
+        }
+
+        static List<string> GetQuotedSubstrings(string input)
+        {
+            // Regular expression to match substrings inside quotation marks
+            Regex regex = new Regex("(?<!~)\"([^\"]*?)\"");
+
+            // Match all substrings enclosed in quotation marks (except those preceded by ~)
+            MatchCollection matches = regex.Matches(input);
+
+            // Extract substrings from matches without the quotation marks
+            List<string> substrings = new List<string>();
+            foreach (Match match in matches)
+            {
+                substrings.Add(match.Groups[1].Value);
+            }
+
+            return substrings;
+        }
+
+        private static Dictionary<string, string> TRANSLATIONS = new Dictionary<string, string>()
+        {
+            {" ","<<<<SPACE>>>>"},
+            {"[","<<<<SQUAREBRACKETLEFT>>>>"},
+            {"]","<<<<SQUAREBRACKETRIGHT>>>>"},
+            {",","<<<<COMMA>>>>"},
+            {":","<<<<COLON>>>>"},
+            {"1","<<<<ONE>>>>"},
+            {"2","<<<<TWO>>>>"},
+            {"3","<<<<THREE>>>>"},
+            {"4","<<<<FOUR>>>>"},
+            {"5","<<<<FIVE>>>>"},
+            {"6","<<<<SIX>>>>"},
+            {"7","<<<<SEVEN>>>>"},
+            {"8","<<<<EIGHT>>>>"},
+            {"9","<<<<NINE>>>>"},
+            {"0","<<<<TEN>>>>"},
+            {"(","<<<<BRACKETLEFT>>>>"},
+            {")","<<<<BRACKETRIGHT>>>>"},
+            {"~'","<<<<SINGLEQUOTATIONMARK>>>>"},
+            {"\"","<<<<QUOTATIONMARK>>>>"},
+        };
+        public static string TranslateString(string input)
+        {
+            string returned = input; //make sure it is fully untranslated (in case someone writes a sn
+            foreach (var item in TRANSLATIONS)
+            {
+                returned = returned.Replace(item.Key, item.Value);
+            }
+            return returned;
+        }
+        public static string UnTranslateString(string input)
+        {
+            string returned = input;
+            foreach (var item in TRANSLATIONS)
+            {
+                returned = returned.Replace(item.Value, item.Key);
+            }
+            return returned;
+        }
+
+        public static string TranslateQuotedStrings(string input)
+        {
+            // Regular expression to match substrings inside single quotation marks (ignoring ~)
+            Regex regex = new Regex("(?<!~)'[^']*?'");
+
+            // Matches all substrings enclosed in single quotation marks (except those preceded by ~)
+            string result = regex.Replace(input, match =>
+            {
+                string quotedString = match.Value;
+                // Iterate through the translations and replace matching keys with values
+                foreach (var item in TRANSLATIONS)
+                {
+                    quotedString = quotedString.Replace(item.Key, item.Value);
+                }
+                return quotedString;
+            });
+
+            return result;
+        }
     }
 }
 

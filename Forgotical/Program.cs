@@ -1,7 +1,8 @@
 ﻿namespace Forgotical.Application;
+using Forgotical.InternalUtility;
 internal class Program
 {
-    public const string VERSION = "0.0.1";
+    public const string VERSION = "0.0.2";
 
     private static void Main(string[] args)
     {
@@ -38,17 +39,6 @@ internal class Program
                 case "3":
                     Console.Clear();
                     return;
-                //case "4": UNIT TESTS!
-                //    string str = "(Retrieve:coolvariablename)";
-                //    while (true)
-                //    {
-                //        var submethods = Utility.GetStringsInParentheses(str);
-                //        if (submethods.Count <= 0) { break; }
-                //        var sublineresult = (true, "yeahiknowright");
-                //        str = str.Replace("(" + submethods[0] + ")", sublineresult.Item2);
-                //        Console.WriteLine(str);
-                //    }
-                //    break;
                 default:
                     break;
             }
