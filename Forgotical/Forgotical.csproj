@@ -1,15 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>EXE</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+<PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+<RuntimeIdentifiers>win10-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
   </PropertyGroup>
-
-<PropertyGroup>
-  <RuntimeIdentifiers>win10-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
-</PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Dotnet.Bundle" Version="0.9.13" />
