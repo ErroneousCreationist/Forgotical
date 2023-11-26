@@ -528,10 +528,6 @@ namespace Forgotical
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
                     }
-                    if (args.Length < 2)
-                    {
-                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
-                    }
                     if (!VARIABLES.ContainsKey(args[0]) && !POINTERS.ContainsKey(args[0]))
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_cantrefresh"].GetChoice(); return errorhandled;
@@ -683,8 +679,8 @@ namespace Forgotical
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
                     }
-                    var targetlinegoto = (int)WordsToNumber.ConvertToNumbers(args[1]) - 2;
-                    if (targetlinegoto >= lineslength || targetlinegoto < 0)
+                    var targetlinegoto = (int)WordsToNumber.ConvertToNumbers(args[0]) - 2;
+                    if (targetlinegoto >= lineslength || targetlinegoto < -1)
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
                     }
@@ -760,7 +756,7 @@ namespace Forgotical
 
                     var targetlinegotoif = result ? (int)WordsToNumber.ConvertToNumbers(args[3]) - 2 : (int)WordsToNumber.ConvertToNumbers(args[4]) - 2;
                     //Console.WriteLine(targetlinegotoif);
-                    if (targetlinegotoif >= lineslength || targetlinegotoif < 0)
+                    if (targetlinegotoif >= lineslength || targetlinegotoif < -1)
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
                     }
@@ -865,7 +861,7 @@ namespace Forgotical
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
                     }
-                    if (args.Length-2 % 2 != 0)
+                    if ((args.Length-2) % 2 != 0)
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_badbranches"].GetChoice(); return errorhandled;
                     }
@@ -884,7 +880,7 @@ namespace Forgotical
                         if (args[0]==item.Item1)
                         {
                             var targetlinegotobranch = (int)WordsToNumber.ConvertToNumbers(item.Item2) - 2;
-                            if (targetlinegotobranch >= lineslength || targetlinegotobranch < 0)
+                            if (targetlinegotobranch >= lineslength || targetlinegotobranch < -1)
                             {
                                 RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
                             }
@@ -895,7 +891,7 @@ namespace Forgotical
                     }
                     //if we don't get any of them, do the default
                     var deftargetlinegotobranch = (int)WordsToNumber.ConvertToNumbers(args[1]) - 2;
-                    if (deftargetlinegotobranch >= lineslength || deftargetlinegotobranch < 0)
+                    if (deftargetlinegotobranch >= lineslength || deftargetlinegotobranch < -1)
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
                     }
