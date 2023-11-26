@@ -1,0 +1,21 @@
+MakeRoomForTheMemory:'one'
+MakeRoomForTheMemory:'one'
+MakeRoomForTheMemory:'one'
+PleaseAttemptToOutputTheFollowing:'Input the first value:'
+Commit:'valueA',(PleaseGetInputFromTheUser:'anything')
+PleaseAttemptToOutputTheFollowing:'Input the second value:'
+Commit:'valueB',(PleaseGetInputFromTheUser:'anything')
+PleaseAttemptToOutputTheFollowing:'Input the operation (add, sub, div, mul):'
+Commit:'operation',(PleaseGetInputFromTheUser:'anything')
+Remember:'valueA'
+Remember:'valueB'
+BranchLikeATree:(Retrieve:'operation'),'twenty','add','thirteen','sub','fourteen','mul','fifteen','div','sixteen'
+EndTheProgramAndOutputTheFollowingYesIAmCompletelySure:(Concatnate:'Result was ',(AddAVariableToTheFollowingVariable:(Retrieve:valueA),(Retrieve:valueB)))
+EndTheProgramAndOutputTheFollowingYesIAmCompletelySure:(Concatnate:'Result was ',(SubtractAVariableFromTheFollowingVariable:(Retrieve:valueA),(Retrieve:valueB)))
+EndTheProgramAndOutputTheFollowingYesIAmCompletelySure:(Concatnate:'Result was ',(MultiplyTheFollowingVariable:(Retrieve:valueA),(Retrieve:valueB)))
+ConditionalGoto:(Retrieve:'valueB'),'zero','Equal','seventeen','nineteen'
+PleaseAttemptToOutputTheFollowing:'Hey, you cant divide by zero!'
+PleaseGoBackOrForwardToReachTheFollowingLine:'one'
+EndTheProgramAndOutputTheFollowingYesIAmCompletelySure:(Concatnate:'Result was ',(DivideTheFollowingVariable:(Retrieve:valueA),(Retrieve:valueB)))
+PleaseAttemptToOutputTheFollowing:'I dont think you typed the right thing. Try again!'
+PleaseGoBackOrForwardToReachTheFollowingLine:'one'
