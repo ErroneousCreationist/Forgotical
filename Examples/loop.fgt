@@ -1,0 +1,10 @@
+MakeRoomForTheMemory:one
+MakeRoomForTheMemory:one
+Commit:counter,zero
+\'this is where the loop starts'
+AddAVariableToTheFollowingVariable:counter,one
+PleaseAttemptToOutputTheFollowing:(Retrieve:counter)
+Remember:counter
+MakeRoomForTheMemory:one
+ConditionalGoto:(Retrieve:counter),ten,OverEqual,ten,four
+EndTheProgramAndOutputTheFollowingYesIAmCompletelySure:(Concatnate:Looped-,(Retrieve:counter))
