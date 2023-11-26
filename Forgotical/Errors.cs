@@ -134,6 +134,34 @@ namespace Forgotical.InternalUtility
 
 "Ah, the ambition! Attempting 'goto' gymnastics in shell mode? That's like trying to fit a square peg into a round hole - it's a no-go! This isn't a code circus; shell mode operates differently. No 'goto' tickets accepted here!"
             } },
+            { "error_alrconst", new string[] {
+               "Hey, hold on a minute! Trying to memorize a constant that already has a name? It's like renaming your pet cat every other day. Sorry, but that name's taken in this code realm!",
+
+"Whoops! Looks like you're trying to memorize a constant with a name that's already engraved in this code's memory. Can't have two constants sharing the same name; it's like trying to fit two people in a single-sized sleeping bag—just doesn't work!",
+
+"Ahoy there! Attempting to etch a new constant at a name that's already occupied? That's like trying to book a seat on a flight that's already full. Sorry, but that name's occupied in the constants' galaxy!"
+            } },
+            { "error_missingconst", new string[] {
+                "Hold your horses! Looking for a constant that's nowhere to be found? It's like searching for buried treasure in a sandbox. Sorry, but that constant's playing hide and seek in this code!",
+
+"Uh-oh! Trying to fetch a non-existent constant? That's like expecting a unicorn in your backyard. Sorry, can't conjure up constants out of thin air!",
+
+"Oopsie-daisy! Attempting to grab a constant that's taken a day off? It's like asking for yesterday's newspaper in tomorrow's newsstand. Sorry, that constant's on vacation from this code!"
+            } },
+            { "error_constmemory", new string[] {
+                "Hold the phone! Trying to jam in a new constant but the memory's as cramped as a clown car at rush hour? It's like trying to fit an elephant in a matchbox. Sorry, there's barely enough room for the constants already juggling in this code!",
+
+"Oops, seems like you're trying to stuff another constant into a memory space that's already packed tighter than a sardine can. It's like trying to squeeze an extra slice into an already full pizza box. Sorry, no room at the inn for new constants!",
+
+"Ahoy there! Attempting to memorize a new constant when the memory's as crowded as a subway at rush hour? It's like trying to add more books to a shelf already bending with weight. Sorry, the memory's at maximum capacity for constants!"
+            } },
+            { "error_badbranches", new string[] {
+                "Hold your horses! Attempting a branching goto without matching pairs is like trying to tango solo—it takes two to dance! Sorry, but these branches need their perfect match, just like peanut butter needs jelly.",
+
+"Whoa there! Your branching goto resembles a puzzle missing a piece! It's like trying to pair socks without their mates. Sorry, but these branches are yearning for their perfect match to tango along!",
+
+"Hold on tight! Your branching goto seems to have misplaced its pair, leaving it as stranded as a lone duck in a pond. Sorry, but these branches need their match to waltz together through this code!"
+            } },
         };
 	}
 }

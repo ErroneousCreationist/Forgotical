@@ -6,6 +6,8 @@ internal class Program
 {
     public const string VERSION = "0.0.3";
 
+    private static string LASTLOADEDFILE = "";
+
     public static void ExecuteCommand(string command)
     {
         Process proc = new System.Diagnostics.Process();
@@ -209,16 +211,18 @@ internal class Program
         void LoadFile()
         {
             Console.Clear();
-            Console.WriteLine("Input the path to your file (.fgt) or -Q to cancel");
+            Console.WriteLine("Input the path to your file (.fgt) or -Q to cancel or -L to run the last loaded file");
             var input = Console.ReadLine();
             if (input == null) { Menu(); return; }
-            if (input == "-q") { Console.Clear(); Menu(); return; }
+            if (input.ToLower()== "-q") { Console.Clear(); Menu(); return; }
+            if (input.ToLower() == "-l" && LASTLOADEDFILE!="") { input = LASTLOADEDFILE; }
             if (!File.Exists(input))
             {
                 Console.WriteLine("File doesn't exist!");
                 Menu();
                 return;
             }
+            LASTLOADEDFILE = input;
             Console.WriteLine("--------------------------------------------------------------");
             var code = File.ReadAllText(input);
             var executor = new Interpreter();
