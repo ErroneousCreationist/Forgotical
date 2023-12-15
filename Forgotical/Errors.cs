@@ -106,7 +106,7 @@ namespace Forgotical.InternalUtility
 
 "Ah, the thrill of living dangerously! But seriously, trying to wield pointers without protection? It's like sword fighting without armor. Wrap those pointers in angle brackets for their safety, and for the sake of your code's wellbeing!"
             } },
-            { "error_number", new string[] {
+            { "error_numbers", new string[] {
                 "Hold it right there! Numbers in your code? Seriously? This isn't a math class; we speak in words here! No digits allowed—spell those numbers out, or my circuits will explode trying to make sense of your numerical mess!",
 
 "Whoa, whoa, whoa! Numbers sneaking into your code like uninvited guests at a party? Not cool! This isn't a calculator; we converse in text, not digits. Spell out those numbers, or prepare for your code to go haywire!",
@@ -161,6 +161,27 @@ namespace Forgotical.InternalUtility
 "Whoa there! Your branching goto resembles a puzzle missing a piece! It's like trying to pair socks without their mates. Sorry, but these branches are yearning for their perfect match to tango along!",
 
 "Hold on tight! Your branching goto seems to have misplaced its pair, leaving it as stranded as a lone duck in a pond. Sorry, but these branches need their match to waltz together through this code!"
+            } },
+            { "error_invalidlineptr", new string[] {
+                "Hold your horses! Trying to craft a line pointer that's about as functional as a chocolate teapot? It's like building a bridge with bubble gum. Sorry, but that pointer's lost its way in the coding maze!",
+
+"Whoopsie-doodle! Your line pointer seems to have taken a wrong turn and ended up in a dead-end. It's like trying to assemble furniture without instructions. Sorry, but that pointer's just not pointing in the right direction!",
+
+"Oh dear! Attempting to fashion a line pointer as puzzling as a jigsaw piece in the wrong puzzle? It's like trying to catch a shadow with a fishing net. Sorry, that pointer's dancing to a different tune in this code symphony!"
+            } },
+            { "error_missinglineptr", new string[] {
+                "Hold on a sec! Trying to use a line pointer that's as invisible as a ghost in this code's world? It's like asking for a tour guide in a maze with no exits. Sorry, that line pointer's lost in the code abyss!",
+
+"Whoops-a-daisy! Your line pointer seems to have taken a detour into the non-existent realm. It's like calling for a taxi in a town without roads. Sorry, that pointer's wandering beyond this code's boundaries!",
+
+"Oh my stars! Attempting to summon a line pointer that's as elusive as a magician's trick? It's like trying to dial a phone number that doesn't exist. Sorry, that line pointer's vanished into thin air in this code dimension!"
+            } },
+            { "error_badstrop", new string[] {
+                "Hold your horses! Attempting a string operation that's as elusive as a unicorn in a haystack? Sorry, but that string operation is playing hide-and-seek in this code universe!",
+
+"Whoopsie-daisy! Your string operation seems to have taken a stroll into the unknown. It's like asking for a secret password at a closed door. Sorry, but that operation's off on an adventure beyond this code!",
+
+"Oh dear! Trying to perform a string operation that's as mysterious as a magician's disappearing act? It's like seeking a needle in a haystack with your eyes closed. Sorry, that string operation's vanished into thin air in this code realm!"
             } },
         };
 	}

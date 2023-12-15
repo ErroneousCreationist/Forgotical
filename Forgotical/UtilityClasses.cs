@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Forgotical.InternalUtility
 {
@@ -145,7 +146,7 @@ namespace Forgotical.InternalUtility
         }
     }
 
-    class Utility
+    public static class Utility
     {
         private static string[] Chars = new string[] { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "!", "@", "#", "$", "%", "^", "&", "*" };
         public static string RandomCharacter
@@ -154,6 +155,39 @@ namespace Forgotical.InternalUtility
             {
                 Random rand = new Random();
                 return Chars[rand.Next(0, Chars.Length)];
+            }
+        }
+
+        public static void ExecuteCommand(string command)
+        {
+            //unix
+            if(Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                Process proc = new System.Diagnostics.Process();
+                proc.StartInfo.FileName = "/bin/bash";
+                proc.StartInfo.Arguments = " -c \"" + command + " \"";
+                proc.StartInfo.RedirectStandardOutput = true;
+                //proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                proc.Start();
+
+                while (!proc.StandardOutput.EndOfStream)
+                {
+                    Console.WriteLine(proc.StandardOutput.ReadLine());
+                }
+            }
+            //windows
+            else if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                Process process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        WindowStyle = ProcessWindowStyle.Hidden,
+                        FileName = "cmd.exe",
+                        Arguments = "/C " + command
+                    }
+                };
+                process.Start();
             }
         }
 
@@ -259,6 +293,12 @@ namespace Forgotical.InternalUtility
             {"~'","<<<<SINGLEQUOTATIONMARK>>>>"},
             {"\"","<<<<QUOTATIONMARK>>>>"},
         };
+        public static string Flip(this string s)
+        {
+            char[] charArray = s.ToCharArray();
+            Array.Reverse(charArray);
+            return new string(charArray);
+        }
         public static string TranslateString(string input)
         {
             string returned = input; //make sure it is fully untranslated (in case someone writes a sn

@@ -1,10 +1,10 @@
-﻿using System;
-using Forgotical.InternalUtility;
+﻿using Forgotical.InternalUtility;
 
 namespace Forgotical
 {
 	public class Interpreter
 	{
+        //classes for variables
         public class VariableStruct
         {
             private string Value;
@@ -116,15 +116,81 @@ namespace Forgotical
             }
 
         }
+        public class LinePointerStruct
+        {
+            private int STARTLINE, ENDLINE;
+            private int MEMORYTIME, LinesExistedFor;
+            private int LINESLENGTH;
 
+            public LinePointerStruct(int start, int end, int line, int lineslength)
+            {
+                STARTLINE = start;
+                ENDLINE = end;
+                Random random = new Random(line);
+                LinesExistedFor = 0;
+                MEMORYTIME = random.Next(8, 13);
+                LINESLENGTH = lineslength;
+            }
+
+            public void LineChanged()
+            {
+                LinesExistedFor += 1;
+                if(LinesExistedFor > MEMORYTIME)
+                {
+                    Random rand = new Random();
+                    if(LINESLENGTH==1)
+                    {
+                        STARTLINE = 1;
+                        ENDLINE = 1;
+                        return;
+                    }
+                    if(LINESLENGTH == 2)
+                    {
+                        STARTLINE = 1;
+                        ENDLINE = 2;
+                        return;
+                    }
+                    if (LINESLENGTH == 3)
+                    {
+                        STARTLINE = rand.Next(1, 3);
+                        ENDLINE = 3;
+                        return;
+                    }
+                    STARTLINE = rand.Next(1, LINESLENGTH / 2);
+                    ENDLINE = rand.Next(LINESLENGTH / 2, LINESLENGTH + 1);
+                }
+            }
+
+            public void RefreshMemory()
+            {
+                LinesExistedFor = new Random().Next(-3, 1);
+            }
+            public (int,int) Get
+            {
+                get
+                {
+                    return (STARTLINE, ENDLINE);
+                }
+            }
+            
+        }
+
+        //enums
         private enum TypeOfOperatorEnum { None, AllocateMemory, Setvariable, Getvariable, AddToVariable, MinusFromVariable, DivideVariable,
             MultiplyVariable, DestroyVariable, RememberVariable, CreatePointer, GetPointer, DestroyPointer, GoToLine, OutputAndEnd, Print,
             PrintNoNewline, Input, AddString, GoToIf, IncrementPointer, DecrementPointer, GetPointerVariable, CreateConst, GetConst, DestroyConst,
-            BranchGoto }
+            BranchGoto, StringOps, ReplaceCharacter, CharAtIndex, RunCommand, GetFilePath, GetPathToLocation, CreateLinePointer, ExecuteLinePointer,
+            DestroyLinePointer, RemoveCharacter, ContainsCharacter, SanitiseNumber, IsNumber, IsTextNumber }
         private enum ComparisionEnum { Invalid, Equal, Over, Under, OverEqual, UnderEqual, NotEqual }
-		public Dictionary<string, VariableStruct> VARIABLES = new Dictionary<string, VariableStruct>();
+        private enum StringOpEnum { Invalid, Length, Lower, Upper, Reverse }
+
+        //variable dictionaries
+        public Dictionary<string, VariableStruct> VARIABLES = new Dictionary<string, VariableStruct>();
         public Dictionary<string, PointerStruct> POINTERS = new Dictionary<string, PointerStruct>();
         public Dictionary<string, string> CONSTS = new Dictionary<string, string>();
+        public Dictionary<string, LinePointerStruct> LINEPTRS = new Dictionary<string, LinePointerStruct>();
+
+        //values
         public int MEMORYAMOUNT = 0;
         public int EXECUTION_LINE = 1;
         private bool ProgramEnded;
@@ -133,9 +199,13 @@ namespace Forgotical
         public int lineslength;
         public string[] lines;
         private bool STEP_MODE, SHELL_MODE;
-        //private bool AlreadySucceeded;
+        private string CodeFilePath;
 
-		public Interpreter(bool step_mode = false)
+        //switch control lines for line pointers
+        private List<(int, int)> SWITCH_CONTROL_LINES = new List<(int, int)>();
+
+        //default constructpr
+		public Interpreter(bool step_mode = false, string codefilepath = "")
 		{
 			VARIABLES = new Dictionary<string, VariableStruct>();
             MEMORYAMOUNT = 0;
@@ -144,15 +214,11 @@ namespace Forgotical
             EXECUTION_LINE = 0;
             lines = new string[0];
             STEP_MODE = step_mode;
+            CodeFilePath = codefilepath;
 		}
 
-        /// <summary>
-        /// This one is for shell mode, since the line, variables and pointers pass over.
-        /// </summary>
-        /// <param name="vars">the previously existing variables</param>
-        /// <param name="pointers">the previously existing pointers</param>
-        /// <param name="execline"></param>
-        public Interpreter(Dictionary<string, VariableStruct> vars, Dictionary<string, PointerStruct> pointers, string[] prevlines, int execline, int mem)
+        //constructor for shell mode
+        public Interpreter(string codefilepath, Dictionary<string, VariableStruct> vars, Dictionary<string, PointerStruct> pointers, string[] prevlines, int execline, int mem)
         {
             VARIABLES = new Dictionary<string, VariableStruct>(vars);
             POINTERS = new Dictionary<string, PointerStruct>(pointers);
@@ -167,10 +233,14 @@ namespace Forgotical
             }
             STEP_MODE = false;
             SHELL_MODE = true;
+            CodeFilePath = codefilepath;
         }
 
+        //shell mode execute code
         public bool ShellExecuteLine(string code, out string Result)
         {
+            code = Utility.TranslateQuotedStrings(code); //sanitise all of the strings in quotation marks to make them safe and not throw errors
+
             if (code.Contains(' ')) { Output = ""; Result = Errors.ERROR_MESSAGES["error_space"].GetChoice(); return false; }
             if (code.IndexOfAny("1234567890".ToCharArray()) != -1) { Output = ""; ProgramEnded = true; Result = Errors.ERROR_MESSAGES["error_numbers"].GetChoice(); return false; }
             //Utility.UnTranslateString(Utility.GetStringsInQuotes(code));
@@ -185,6 +255,7 @@ namespace Forgotical
             return true;
         }
 
+        //execute code
         public bool ExecuteCode(string code, out string Result)
         {
             //whitespace error because we hate whitespace here
@@ -195,7 +266,6 @@ namespace Forgotical
             if(code.IndexOfAny("1234567890".ToCharArray()) != -1) { Output = ""; ProgramEnded = true; Result = Errors.ERROR_MESSAGES["error_numbers"].GetChoice(); return false; }
 
             //recreate to sanitise - to space so we can actually write stuff normally
-            code = code.Replace("-", " ");
             resultant = code.Split("\n");
             lineslength = resultant.Length;
             lines = new string[lineslength];
@@ -204,16 +274,8 @@ namespace Forgotical
             while (!ProgramEnded)
             {
                 wasrefreshline = false;
-                if (STEP_MODE)
-                {
-                    Console.WriteLine($"Current line: {EXECUTION_LINE + 1}. Line content: {resultant[EXECUTION_LINE]}");
-                    foreach (var item in VARIABLES)
-                    {
-                        Console.WriteLine($"variable {item.Key} has a value of {item.Value.Get}");
-                    }
-                    Console.ReadKey();
-                }
                 if (EXECUTION_LINE == lineslength && !ProgramEnded) { Output = ""; ProgramEnded = true; break; }
+                int line = EXECUTION_LINE;
                 if (!ExecuteLine(resultant[EXECUTION_LINE], out string tempresult))
                 {
                     Output = tempresult;
@@ -223,7 +285,7 @@ namespace Forgotical
                 }
                 Random rand = new Random();
                 var memoryupdateprobability = 1 - MathF.Pow(MathF.E, -(0.01f * MEMORYAMOUNT));
-                if(rand.NextDouble() < 1-memoryupdateprobability && !wasrefreshline)
+                if (rand.NextDouble() < 1 - memoryupdateprobability && !wasrefreshline)
                 {
                     foreach (var variable in VARIABLES)
                     {
@@ -234,7 +296,26 @@ namespace Forgotical
                         pointer.Value.LineChanged();
                     }
                 }
+                for (int i = 0; i < SWITCH_CONTROL_LINES.Count; i++)
+                {
+                    if (EXECUTION_LINE == SWITCH_CONTROL_LINES[i].Item1)
+                    {
+                        EXECUTION_LINE = SWITCH_CONTROL_LINES[i].Item2;
+                        SWITCH_CONTROL_LINES.RemoveAt(i);
+                        break;
+                    }
+                }
                 EXECUTION_LINE++;
+                if(STEP_MODE)
+                {
+                    Console.WriteLine($"Current line: {line + 1}. Line content: {resultant[line]}");
+                    foreach (var item in VARIABLES)
+                    {
+                        Console.WriteLine($"variable {item.Key} has a value of {item.Value.Get}");
+                    }
+                    Console.Write("\n");
+                    Console.ReadKey();
+                }
             }
             Result = Output;
             return true;
@@ -250,6 +331,7 @@ namespace Forgotical
             //}
         }
 
+        //execute a single expression on a line
         private bool ExecuteLine(string thecode, out string RESULT)
         {
             string line = new string(thecode.ToCharArray());
@@ -367,6 +449,45 @@ namespace Forgotical
                 case "BranchLikeATree":
                     op = TypeOfOperatorEnum.BranchGoto;
                     break;
+                case "StrOp":
+                    op = TypeOfOperatorEnum.StringOps;
+                    break;
+                case "Replace":
+                    op = TypeOfOperatorEnum.ReplaceCharacter;
+                    break;
+                case "GetAtIndex":
+                    op = TypeOfOperatorEnum.CharAtIndex;
+                    break;
+                case "ExecCommand":
+                    op = TypeOfOperatorEnum.RunCommand;
+                    break;
+                case "GetThisPath":
+                    op = TypeOfOperatorEnum.GetFilePath;
+                    break;
+                case "CommitLinePointer":
+                    op = TypeOfOperatorEnum.CreateLinePointer;
+                    break;
+                case "DoLinePointer":
+                    op = TypeOfOperatorEnum.ExecuteLinePointer;
+                    break;
+                case "ObliterateLinePointer":
+                    op = TypeOfOperatorEnum.DestroyLinePointer;
+                    break;
+                case "RemoveCharacter":
+                    op = TypeOfOperatorEnum.RemoveCharacter;
+                    break;
+                case "ContainsCharacter":
+                    op = TypeOfOperatorEnum.ContainsCharacter;
+                    break;
+                case "NumToWord":
+                    op = TypeOfOperatorEnum.SanitiseNumber;
+                    break;
+                case "IsANumber":
+                    op = TypeOfOperatorEnum.IsNumber;
+                    break;
+                case "IsATextNumber":
+                    op = TypeOfOperatorEnum.IsTextNumber;
+                    break;
                 default:
                     //if our operator does not exist then what happened
                     RESULT = Errors.ERROR_MESSAGES["error_badexp"].GetChoice();
@@ -374,7 +495,7 @@ namespace Forgotical
             }
 
             //check for unprotected unsafe code
-            if((op==TypeOfOperatorEnum.CreatePointer|| op == TypeOfOperatorEnum.IncrementPointer || op == TypeOfOperatorEnum.DecrementPointer || op ==TypeOfOperatorEnum.GetPointer||op==TypeOfOperatorEnum.DestroyPointer) && (origline[0] != '[' || origline[origline.Length-1] != ']'))
+            if((op==TypeOfOperatorEnum.CreatePointer|| op == TypeOfOperatorEnum.IncrementPointer || op == TypeOfOperatorEnum.DecrementPointer || op ==TypeOfOperatorEnum.GetPointer||op==TypeOfOperatorEnum.DestroyPointer || op==TypeOfOperatorEnum.RunCommand || op==TypeOfOperatorEnum.CreateLinePointer || op==TypeOfOperatorEnum.ExecuteLinePointer || op==TypeOfOperatorEnum.DestroyLinePointer) && (origline[0] != '[' || origline[origline.Length-1] != ']'))
             {
                 RESULT = Errors.ERROR_MESSAGES["error_unsafe"].GetChoice(); return errorhandled;
             }
@@ -423,17 +544,18 @@ namespace Forgotical
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
                     }
-                    if (MEMORYAMOUNT<=0)
-                    {
-                        RESULT = Errors.ERROR_MESSAGES["error_nomemory"].GetChoice(); return errorhandled;
-                    }
-                    MEMORYAMOUNT -= 1;
+                    
                     if (VARIABLES.ContainsKey(args[0]))
                     {
                         VARIABLES[args[0]] = new VariableStruct(args[1], EXECUTION_LINE);
                     }
                     else
                     {
+                        if (MEMORYAMOUNT <= 0)
+                        {
+                            RESULT = Errors.ERROR_MESSAGES["error_nomemory"].GetChoice(); return errorhandled;
+                        }
+                        MEMORYAMOUNT -= 1;
                         VARIABLES.Add(args[0], new VariableStruct(args[1], EXECUTION_LINE));
                     }
                     break;
@@ -802,10 +924,6 @@ namespace Forgotical
                     }
                     break;
                 case TypeOfOperatorEnum.AddString:
-                    if (args.Length > 2)
-                    {
-                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
-                    }
                     if (args.Length < 2)
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
@@ -814,10 +932,12 @@ namespace Forgotical
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_varmissing"].GetChoice(); return errorhandled;
                     }
-                    var val1 = VARIABLES[args[0]].Get;
-                    var val2 = args[1];
-
-                    VARIABLES[args[0]] = new VariableStruct(val1+val2, EXECUTION_LINE);
+                    string newstr = VARIABLES[args[0]].Get;
+                    for (int i = 1; i < args.Length; i++)
+                    {
+                        newstr += args[i];
+                    }
+                    VARIABLES[args[0]] = new VariableStruct(newstr, EXECUTION_LINE);
                     break;
                 case TypeOfOperatorEnum.CreateConst:
                     if (args.Length > 2)
@@ -898,11 +1018,176 @@ namespace Forgotical
                     EXECUTION_LINE = deftargetlinegotobranch;
                     RESULT = "";
                     return true;
+                case TypeOfOperatorEnum.StringOps:
+                    if(args.Length < 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
+                    }
+                    if(args.Length>2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    //IMPLEMENT THIS FOR SUB-EXPRESSIONS
+                    break;
+                case TypeOfOperatorEnum.ReplaceCharacter:
+                    if (args.Length < 3)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
+                    }
+                    if (args.Length > 3)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    if (!VARIABLES.ContainsKey(args[0]) && !CONSTS.ContainsKey(args[0]))
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_varmissing"].GetChoice(); return errorhandled;
+                    }
+                    if(!CONSTS.ContainsKey(args[0]))
+                    {
+                        var initialvalue = VARIABLES[args[0]].Get;
+                        VARIABLES[args[0]] = new VariableStruct(initialvalue.Replace(args[1], args[2]), EXECUTION_LINE);
+                    }
+                    if (!VARIABLES.ContainsKey(args[0]))
+                    {
+                        var initialvalue = CONSTS[args[0]];
+                        CONSTS[args[0]] = initialvalue.Replace(args[1], args[2]);
+                    }
+                    break;
+                case TypeOfOperatorEnum.CharAtIndex:
+                    if (args.Length < 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
+                    }
+                    if (args.Length > 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    //IMPLEMENT IN SUB EXPRESSION
+                    break;
+                case TypeOfOperatorEnum.RunCommand:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    Utility.ExecuteCommand(args[0]);
+                    break;
+                case TypeOfOperatorEnum.GetFilePath:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    if (!VARIABLES.ContainsKey(args[0]))
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_varmissing"].GetChoice(); return errorhandled;
+                    }
+                    VARIABLES[args[0]] = new VariableStruct(CodeFilePath, EXECUTION_LINE);
+                    break;
+                case TypeOfOperatorEnum.CreateLinePointer:
+                    if (args.Length > 3)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    if (args.Length < 3)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return errorhandled;
+                    }
+                    var targ1 = (int)WordsToNumber.ConvertToNumbers(args[1])-2;
+                    var targ2 = (int)WordsToNumber.ConvertToNumbers(args[2])-1;
+                    if (targ1 >= lineslength || targ1 < -1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
+                    }
+                    if (targ2 >= lineslength || targ2 < 0 || targ2<targ1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
+                    }
+                    if (LINEPTRS.ContainsKey(args[0]))
+                    {
+                        LINEPTRS[args[0]] = new LinePointerStruct(targ1, targ2, EXECUTION_LINE, lineslength);
+                    }
+                    else
+                    {
+                        LINEPTRS.Add(args[0], new LinePointerStruct(targ1, targ2, EXECUTION_LINE, lineslength));
+                    }
+                    break;
+                case TypeOfOperatorEnum.ExecuteLinePointer:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    if (!LINEPTRS.ContainsKey(args[0]))
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_missinglineptr"].GetChoice(); return errorhandled;
+                    }
+                    var lineptr = LINEPTRS[args[0]].Get;
+                    var target = lineptr.Item1;
+                    //Console.WriteLine("first target " + target);
+                    if (target >= lineslength || target < -1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
+                    }
+                    var target2 = lineptr.Item2;
+                    //Console.WriteLine("second target " + target2);
+                    if (target2 >= lineslength || target2 < 0 || target2 < target)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_invalidgoto"].GetChoice(); return errorhandled;
+                    }
+                    SWITCH_CONTROL_LINES.Add((target2, EXECUTION_LINE));
+                    EXECUTION_LINE = target;
+                    RESULT = "";
+                    return true;
+                case TypeOfOperatorEnum.DestroyLinePointer:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    if (!LINEPTRS.ContainsKey(args[0]))
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_missinglineptr"].GetChoice(); return errorhandled;
+                    }
+                    LINEPTRS.Remove(args[0]);
+                    break;
+                case TypeOfOperatorEnum.RemoveCharacter:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    //IMPLEMENT IN SUB EXPRESSION
+                    break;
+                case TypeOfOperatorEnum.ContainsCharacter:
+                    if(args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    //IMPLEMENT IN SUB EXPRESSION
+                    break;
+                case TypeOfOperatorEnum.SanitiseNumber:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    //IMPLEMENT IN SUB EXPRESSION
+                    break;
+                case TypeOfOperatorEnum.IsNumber:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    //IMPLEMENT IN SUB EXPRESSION
+                    break;
+                case TypeOfOperatorEnum.IsTextNumber:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return errorhandled;
+                    }
+                    //IMPLEMENT IN SUB EXPRESSION
+                    break;
             }
             RESULT = "";
             return true;
         }
 
+        //execute a sub expression
         private (bool,string) ExecuteSubLine(string line, out string RESULT)
         {
             if (line[0] == '\\') { RESULT = ""; return (true,""); } //comments
@@ -1007,6 +1292,45 @@ namespace Forgotical
                 case "BranchLikeATree":
                     op = TypeOfOperatorEnum.BranchGoto;
                     break;
+                case "StrOp":
+                    op = TypeOfOperatorEnum.StringOps;
+                    break;
+                case "Replace":
+                    op = TypeOfOperatorEnum.ReplaceCharacter;
+                    break;
+                case "GetAtIndex":
+                    op = TypeOfOperatorEnum.CharAtIndex;
+                    break;
+                case "ExecCommand":
+                    op = TypeOfOperatorEnum.RunCommand;
+                    break;
+                case "GetThisPath":
+                    op = TypeOfOperatorEnum.GetFilePath;
+                    break;
+                case "CommitLinePointer":
+                    op = TypeOfOperatorEnum.CreateLinePointer;
+                    break;
+                case "DoLinePointer":
+                    op = TypeOfOperatorEnum.ExecuteLinePointer;
+                    break;
+                case "ObliterateLinePointer":
+                    op = TypeOfOperatorEnum.DestroyLinePointer;
+                    break;
+                case "RemoveCharacter":
+                    op = TypeOfOperatorEnum.RemoveCharacter;
+                    break;
+                case "ContainsCharacter":
+                    op = TypeOfOperatorEnum.ContainsCharacter;
+                    break;
+                case "NumToWord":
+                    op = TypeOfOperatorEnum.SanitiseNumber;
+                    break;
+                case "IsANumber":
+                    op = TypeOfOperatorEnum.IsNumber;
+                    break;
+                case "IsATextNumber":
+                    op = TypeOfOperatorEnum.IsTextNumber;
+                    break;
                 default:
                     //if our operator does not exist then what happened
                     RESULT = Errors.ERROR_MESSAGES["error_badexp"].GetChoice();
@@ -1014,9 +1338,9 @@ namespace Forgotical
             }
 
             //check for unprotected unsafe code
-            if ((op == TypeOfOperatorEnum.CreatePointer || op == TypeOfOperatorEnum.GetPointer || op == TypeOfOperatorEnum.DestroyPointer) && (origline[0] != '[' || origline[origline.Length - 1] != ']'))
+            if ((op == TypeOfOperatorEnum.CreatePointer || op == TypeOfOperatorEnum.IncrementPointer || op == TypeOfOperatorEnum.DecrementPointer || op == TypeOfOperatorEnum.GetPointer || op == TypeOfOperatorEnum.DestroyPointer || op == TypeOfOperatorEnum.RunCommand || op == TypeOfOperatorEnum.CreateLinePointer || op == TypeOfOperatorEnum.ExecuteLinePointer || op == TypeOfOperatorEnum.DestroyLinePointer) && (origline[0] != '[' || origline[origline.Length - 1] != ']'))
             {
-                RESULT = Errors.ERROR_MESSAGES["error_unsafe"].GetChoice(); return (errorhandled, "") ;
+                RESULT = Errors.ERROR_MESSAGES["error_unsafe"].GetChoice(); return (errorhandled, "");
             }
 
             //get args (separated by commas
@@ -1049,17 +1373,18 @@ namespace Forgotical
                     {
                         RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return (errorhandled, "");
                     }
-                    if (MEMORYAMOUNT <= 0)
-                    {
-                        RESULT = Errors.ERROR_MESSAGES["error_nomemory"].GetChoice(); return (errorhandled, "");
-                    }
-                    MEMORYAMOUNT -= 1;
+                    
                     if (VARIABLES.ContainsKey(args[0]))
                     {
                         VARIABLES[args[0]] = new VariableStruct(args[1], EXECUTION_LINE);
                     }
                     else
                     {
+                        if (MEMORYAMOUNT <= 0)
+                        {
+                            RESULT = Errors.ERROR_MESSAGES["error_nomemory"].GetChoice(); return (errorhandled, "");
+                        }
+                        MEMORYAMOUNT -= 1;
                         VARIABLES.Add(args[0], new VariableStruct(args[1], EXECUTION_LINE));
                     }
                     RESULT = "";
@@ -1203,12 +1528,17 @@ namespace Forgotical
                     RESULT = "";
                     return (true, read??""); //return the input
                 case TypeOfOperatorEnum.AddString:
-                    if (args.Length > 2)
+                    if (args.Length < 2)
                     {
-                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    string newstr = args[0];
+                    for (int i = 1; i < args.Length; i++)
+                    {
+                        newstr += args[i];
                     }
                     RESULT = "";
-                    return (true, args[0] + args[1]); //return the input
+                    return (true, newstr); //return the input
                 case TypeOfOperatorEnum.CreateConst:
                     if (args.Length > 2)
                     {
@@ -1245,7 +1575,148 @@ namespace Forgotical
                     RESULT = Errors.ERROR_MESSAGES["error_illegalexp"].GetChoice(); return (errorhandled, "");
                 case TypeOfOperatorEnum.BranchGoto:
                     RESULT = Errors.ERROR_MESSAGES["error_illegalexp"].GetChoice(); return (errorhandled, "");
-
+                case TypeOfOperatorEnum.StringOps:
+                    if (args.Length < 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    if (args.Length > 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    var strop = StringOpEnum.Invalid;
+                    switch(args[1])
+                    {
+                        case "Lowercase":
+                            strop = StringOpEnum.Lower;
+                            break;
+                        case "Uppercase":
+                            strop = StringOpEnum.Upper;
+                            break;
+                        case "Reverse":
+                            strop = StringOpEnum.Reverse;
+                            break;
+                        case "Length":
+                            strop = StringOpEnum.Length;
+                            break;
+                        default:
+                            RESULT = Errors.ERROR_MESSAGES["error_badstrop"].GetChoice(); return (errorhandled, "");
+                    }
+                    string result = "";
+                    switch (strop)
+                    {
+                        case StringOpEnum.Length:
+                            result = NumberToWords.ConvertToWords(args[0].Length);
+                            break;
+                        case StringOpEnum.Lower:
+                            result = args[0].ToLower();
+                            break;
+                        case StringOpEnum.Upper:
+                            result = args[0].ToUpper();
+                            break;
+                        case StringOpEnum.Reverse:
+                            result = args[0].Flip();
+                            break;
+                    }
+                    RESULT = "";
+                    return (true, result);
+                case TypeOfOperatorEnum.ReplaceCharacter:
+                    if (args.Length < 3)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    if (args.Length > 3)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    if (!VARIABLES.ContainsKey(args[0]) && !CONSTS.ContainsKey(args[0]))
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_varmissing"].GetChoice(); return (errorhandled, "");
+                    }
+                    if (!CONSTS.ContainsKey(args[0]))
+                    {
+                        var initialvalue = VARIABLES[args[0]].Get;
+                        VARIABLES[args[0]] = new VariableStruct(initialvalue.Replace(args[1], args[2]), EXECUTION_LINE);
+                    }
+                    if (!VARIABLES.ContainsKey(args[0]))
+                    {
+                        var initialvalue = CONSTS[args[0]];
+                        CONSTS[args[0]] = initialvalue.Replace(args[1], args[2]);
+                    }
+                    break;
+                case TypeOfOperatorEnum.CharAtIndex:
+                    if (args.Length < 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_badargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    if (args.Length > 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    RESULT = "";
+                    return (true, new string(args[0][(int)WordsToNumber.ConvertToNumbers(args[1])], 1));
+                case TypeOfOperatorEnum.RunCommand:
+                    RESULT = Errors.ERROR_MESSAGES["error_illegalexp"].GetChoice(); return (errorhandled, "");
+                case TypeOfOperatorEnum.GetFilePath:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    if (VARIABLES.ContainsKey(args[0]))
+                    {
+                        VARIABLES[args[0]] = new VariableStruct(CodeFilePath, EXECUTION_LINE);
+                    }
+                    RESULT = "";
+                    return (true, CodeFilePath);
+                case TypeOfOperatorEnum.CreateLinePointer:
+                    RESULT = Errors.ERROR_MESSAGES["error_illegalexp"].GetChoice(); return (errorhandled, "");
+                case TypeOfOperatorEnum.ExecuteLinePointer:
+                    RESULT = Errors.ERROR_MESSAGES["error_illegalexp"].GetChoice(); return (errorhandled, "");
+                case TypeOfOperatorEnum.DestroyLinePointer:
+                    RESULT = Errors.ERROR_MESSAGES["error_illegalexp"].GetChoice(); return (errorhandled, "");
+                case TypeOfOperatorEnum.RemoveCharacter:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    RESULT = "";
+                    return (true, args[0].Replace(args[1], ""));
+                case TypeOfOperatorEnum.ContainsCharacter:
+                    if (args.Length > 2)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    RESULT = "";
+                    return (true, args[0].Contains(args[1]) ? "true" : "false");
+                case TypeOfOperatorEnum.SanitiseNumber:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    RESULT = "";
+                    float.TryParse(args[0], out float res);
+                    return (true, NumberToWords.ConvertToWords(res));
+                case TypeOfOperatorEnum.IsNumber:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    RESULT = "";
+                    return (true, float.TryParse(args[0], out float _) ? "true" : "false");
+                case TypeOfOperatorEnum.IsTextNumber:
+                    if (args.Length > 1)
+                    {
+                        RESULT = Errors.ERROR_MESSAGES["error_toomanyargs"].GetChoice(); return (errorhandled, "");
+                    }
+                    RESULT = "";
+                    if (args[0] == "zero")
+                    {
+                        return (true, "true");
+                    }
+                    else
+                    {
+                        return (true, WordsToNumber.ConvertToNumbers(args[0]) == 0 ? "false" : "true");
+                    }
             }
             RESULT = "";
             return (errorhandled,"");

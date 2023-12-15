@@ -1,27 +1,11 @@
 ﻿namespace Forgotical.Application;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 internal class Program
 {
-    public const string VERSION = "0.0.4";
+    public const string VERSION = "0.0.5";
 
     private static string LASTLOADEDFILE = "";
-
-    public static void ExecuteCommand(string command)
-    {
-        Process proc = new System.Diagnostics.Process();
-        proc.StartInfo.FileName = "/bin/bash";
-        proc.StartInfo.Arguments = " -c \"" + command + " \"";
-        proc.StartInfo.RedirectStandardOutput = true;
-        //proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-        proc.Start();
-
-        while (!proc.StandardOutput.EndOfStream)
-        {
-            Console.WriteLine(proc.StandardOutput.ReadLine());
-        }
-    }
 
     private static void Main(string[] args)
     {
@@ -39,7 +23,7 @@ internal class Program
         void Menu()
         {
             Console.WriteLine("--------------------------------------------------------------");
-            Console.WriteLine("Press 1 to use the SHELL, Press 2 to LOAD A CODE FILE AND RUN IT, Press 3 to BUILD A CODE FILE, Press 4 to exit");
+            Console.WriteLine("Press 1 to use the SHELL, Press 2 to LOAD A CODE FILE AND RUN IT, Press 3 to LOAD A CODE FILE AND RUN IT IN STEP MODE, Press 4 to BUILD A CODE FILE, Press 5 to exit");
             var input = Console.ReadLine();
             if (input == null || input == "")
             {
@@ -56,9 +40,12 @@ internal class Program
                     LoadFile();
                     break;
                 case "3":
-                    BuildGivenFile();
+                    LoadFile(true);
                     break;
                 case "4":
+                    BuildGivenFile();
+                    break;
+                case "5":
                     Console.Clear();
                     return;
                 default:
@@ -130,7 +117,7 @@ internal class Program
             Console.WriteLine("Running file "+input);
             Console.WriteLine("--------------------------------------------------------------");
             var code = File.ReadAllText(input);
-            var executor = new Interpreter(stepmode);
+            var executor = new Interpreter(stepmode, input);
             bool success = executor.ExecuteCode(code, out string result);
             Console.WriteLine("\n--------------------------------------------------------------");
             var successstring = success ? "Successful" : "Failed with error";
@@ -192,7 +179,7 @@ internal class Program
             }
 
             var code = File.ReadAllText(args[0]);
-            var executor = new Interpreter();
+            var executor = new Interpreter(false, args[0]);
             bool success = executor.ExecuteCode(code, out string result);
             if (!success)
             {
@@ -208,7 +195,7 @@ internal class Program
             else { Console.WriteLine(result); }
         }
 
-        void LoadFile()
+        void LoadFile(bool stepmode = false)
         {
             Console.Clear();
             Console.WriteLine("Input the path to your file (.fgt) or -Q to cancel or -L to run the last loaded file");
@@ -225,7 +212,7 @@ internal class Program
             LASTLOADEDFILE = input;
             Console.WriteLine("--------------------------------------------------------------");
             var code = File.ReadAllText(input);
-            var executor = new Interpreter();
+            var executor = new Interpreter(stepmode, input);
             bool success = executor.ExecuteCode(code, out string result);
             Console.WriteLine("\n--------------------------------------------------------------");
             var successstring = success ? "Successful" : "Failed with error";
@@ -262,10 +249,11 @@ internal class Program
                     Menu();
                     return;
                 }
+                var mydir = AppContext.BaseDirectory;
                 var l = Lines.Length;
                 Array.Resize(ref Lines, l + 1);
                 Lines[l] = input;
-                var executor = new Interpreter(VARIABLES, POINTERS, Lines, EXEC_LINE, MEMORY);
+                var executor = new Interpreter(mydir, VARIABLES, POINTERS, Lines, EXEC_LINE, MEMORY);
                 bool success = executor.ShellExecuteLine(input, out string result);
                 if (!success) { Console.WriteLine($"Error: \"{result}\""); continue; }
                 VARIABLES = executor.VARIABLES;
